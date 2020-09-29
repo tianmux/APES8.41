@@ -2,6 +2,7 @@ import numpy as np
 import os
 import subprocess
 
+# constants
 pi = np.pi
 clight = 299792458
 E0Au = 196.9665687*931.5e6
@@ -9,7 +10,7 @@ E0Elec = 0.51099895000e6
 E0P = 938.27208816e6
 qe = 1.60217662e-19
 
-working_folder = '20200907_ion_591_store_A0.8_SOM5_fine_mesh'
+working_folder = 'example'
 home = os.getcwd()
 cwd = working_folder
 try:
@@ -22,21 +23,21 @@ else:
 tempinput = {}
 
         
-type_of_particle =  0 # 0 means pronton, 1 means electron, 
-csv_out = 0
-dynamicOn = 0
-n_per_show = 10
-turn_start = 0
+type_of_particle =  0 # indicate the type of the particle, "0" means proton, "1" means electron, "2" means Au;
+csv_out = 0 #control the output of csv file;
+dynamicOn = 0 #control the behavior of the beam dynamic at the beginning of the time, default is “off”;
+n_per_show = 10 # not in use
+turn_start = 0 # not in use
 
-mainRF = 0
-main_detune = 0
-detune_slow_factor = 1.0 
-R = 610.1754 
-GMTSQ = 23.45**2#736.58
-Gamma = 293.09#19600.0 
+mainRF = 0 #the index of the RF used by the code to calculate ramping of Vref and Iref;
+main_detune = 0 #the index of RF used by the code to calculate ramping of the detuning;
+detune_slow_factor = 1.0 #not in use
+R = 610.1754 # the radius of the ring;
+GMTSQ = 23.45**2 # the gammaT^2;
+Gamma = 293.09 # the reference gamma of the beam;
 
-nBeam = 1
-beam_shift = 94
+nBeam = 1 # the number of beams;
+beam_shift = 94 #the shift between two beams in unit of mainRF cycle;
 
 beta = np.sqrt(1-1/Gamma**2)
 T0 = 2*np.pi*R/(clight*beta)
@@ -44,41 +45,41 @@ f0 = 1/T0
 
 #----------------------------#
 #important inputs
-IbDC = 1
-n_turns = 30000
-n_dynamicOn = 3000
-n_bunches = 630 
-n_fill = 1000
-n_q_ramp = 2000
-n_detune_start = 1000
-n_detune_ramp = 3000
-n_detune_ramp_tot = 3000
-n_I_ramp_start = 1000
-n_I_ramp_end = 3000
-step_store = 1000
-Prad = 1e1#9.72e6
-t_rad_long=  1e11#0.03555
-Ek_damp = 1e11
-Ek_damp_always = 1e11  # to keep the beam stable if needed.
-Npar = 1440*10
-NperBunch = IbDC/n_bunches/f0/qe
-N_bins = 333
-fill_step = 12
-siglong = 11.368 
-A = 0.8
+IbDC = 1 # average current of the beam
+n_turns = 30000 # total number of turns the beam will be tracked.
+n_dynamicOn = 3000 #the number of turn we turn on the beam dynamics;
+n_bunches = 630  #  the number of bunches in one beam;
+n_fill = 1000 # the turn we start to ramp the bunches charge;
+n_q_ramp = 2000 # the number of turns it takes to ramp the charge;
+n_detune_start = 1000 # the turn we start to ramp the detuning;
+n_detune_ramp = 3000 #the legacy parameter, not in use;
+n_detune_ramp_tot = 3000 # the turn we finish the ramping of the detuning;
+n_I_ramp_start = 1000 # the turn we start to ramp the driving current of the RF amplifier;
+n_I_ramp_end = 3000 #  the turn we finish ramping the driving current of the RF amplifier;
+step_store = 1000 # not in use
+Prad = 1e1 # the radiation power of the beam, in unit of watts.  can be used to calculate synchronous RF voltage;
+t_rad_long=  1e11# the longitudinal radiation damping time, in unit of seconds;
+Ek_damp = 1e11  #the artificial damping on the bunch energy before the bunch is rampped to full charge, in unit of number of synchrotron oscillation;
+Ek_damp_always = 1e11  # the artificial damping on the bunch energy after the bunch is rampped to full charge, in unit of number of synchrotron oscillation;
+Npar = 1 # number of macro particles in one bunch;
+NperBunch = IbDC/n_bunches/f0/qe  # the number of real particles in one bunch;
+N_bins = 33 # the number of time slices per RF cycle;
+fill_step = 12 # the number of RF cycles between bunches;
+siglong = 11.368 # the sigma gamma;
+A = 0.8 #the 95% particle emittance, assuming Gaussian bunch;
 
-nRF = 5
-nRF1 = 5
-nRFc = 0
-nRF2 = 0
-nHOM = 0
-nCav = np.array([2,2,2,2,2])
-h = np.array([7560,7371,7422,7486,7539])
-RoQ = np.array([251,9.47e-3/2,4.53e-3/2,3.18e-2/2,1.14e-2/2])*nCav
+nRF = 5 # number of RF systems;
+nRF1 = 5 #number of RF systems in ring 1;
+nRFc = 0 #number of RF systems shared by both rings;
+nRF2 = 0 # number of RF systems in ring 2;
+nHOM = 0 #legacy parameters, not in use;
+nCav = np.array([2,2,2,2,2]) #array type parameters, indicate the number of cavities for each RF system, length of the array should be equal to “nRF”;
+h = np.array([7560,7371,7422,7486,7539]) #array type parameters, the harmonic numbers of each RF systems;
+RoQ = np.array([251,9.47e-3/2,4.53e-3/2,3.18e-2/2,1.14e-2/2])*nCav #array type parameters, the R over Q of each RF systems, circuit definition;
 delay_time = np.array([1e-6,1e-6,1e-6,1e-6,1e-6]) # in unit of second
 delay = [(delay_time[i]*f0*h[0])*N_bins for i in range(len(delay_time))] # number of data points corresponding to the delay time.
 
-n_fb_on = np.array([3000,3000,3000,3000,3000])
+n_fb_on = np.array([3000,3000,3000,3000,3000]) # array type parameters, the turn we turn on the direct feedback;
 gII = np.array([0,0,0,0,0])
 gQQ = np.array([0,0,0,0,0])
 gIQ = np.array([0.0,0,0,0,0])
@@ -88,31 +89,30 @@ gQQi = np.array([0.0,0,0,0,0])
 gIQi = np.array([0.0,0,0,0,0])
 gQIi = np.array([0.0,0,0,0,0])
 
-epsilon_comb = np.array([1e-2,1e-2,1e-2,1e-2,1e-2])
-g_comb = np.array([0,0,0,0,0])
+epsilon_comb = np.array([1e-2,1e-2,1e-2,1e-2,1e-2]) # the epsilon of the comb filter;
+g_comb = np.array([0,0,0,0,0]) # the g number of the comb filter;
 
-PA_cap = np.array([1.0,1,1,1,1])
 
 #----------------------------#
 # the following parameters need to be derived from the input parameters
 # the numbers here are just some place holders.
-QL = np.array([1,1,1,1,1])
-Vref_I = np.array([1,1,1,1,1])
-Vref_Q = np.array([1,1,1,1,1])
-Iref_I = np.array([1,1,1,1,1])
-Iref_Q = np.array([1,1,1,1,1])
-I_I_ref_ini = np.array([1,1,1,1,1])
-I_I_ref_final = np.array([1,1,1,1,1])
-I_Q_ref_ini = np.array([1,1,1,1,1])
-I_Q_ref_final = np.array([1,1,1,1,1])
-detune = np.array([0.0,0,0,0,0])
-detune_ini = np.array([0.0,0,0,0,0])
-detune_mid = np.array([0,0,0,0,0])
-detune_final = np.array([0,0,0,0,0])
+QL = np.array([1,1,1,1,1]) #loaded Q of each RF system;
+Vref_I = np.array([1,1,1,1,1]) # array type parameters, the I component of the reference cavity voltage;
+Vref_Q = np.array([1,1,1,1,1]) # array type parameters, the Q component of the reference cavity voltage;
+Iref_I = np.array([1,1,1,1,1]) # array type parameters, the values of the the I component of the reference driving current, should be equal to “I_I_ref_final”;
+Iref_Q = np.array([1,1,1,1,1]) # array type parameters, the values of the the Q component of the reference driving current, should be equal to “I_Q_ref_final”;
+I_I_ref_ini = np.array([1,1,1,1,1]) # array type parameters, the initial values of the the I component of the reference driving current;
+I_I_ref_final = np.array([1,1,1,1,1]) # array type parameters, the final values of the the I component of the reference driving current;
+I_Q_ref_ini = np.array([1,1,1,1,1]) # array type parameters, the initial values of the the Q component of the reference driving current;
+I_Q_ref_final = np.array([1,1,1,1,1]) # array type parameters, the final values of the the Q component of the reference driving current;
+detune = np.array([0.0,0,0,0,0]) # the initial detune of each RF system, in unit of Hz;
+detune_ini = np.array([0.0,0,0,0,0]) #  the initial detune of each RF system;
+detune_mid = np.array([0,0,0,0,0]) #legacy parameter, the mid point of the detune;
+detune_final = np.array([0,0,0,0,0]) # the final value of the detune of each RF system;
 
-n_ini_CBI = np.array([1])
-mu = np.array([0])
-CBI_ini_amp = np.array([0])
+n_ini_CBI = np.array([1]) # the number of coupled bunch modes to initialize;
+mu = np.array([0]) #the mus of the coupled bunch mode;
+CBI_ini_amp = np.array([0]) #the amplitudes of the coupled bunch modes, in unit of gamma;
 
 
 beta = np.sqrt(1-1/Gamma**2)
@@ -130,10 +130,7 @@ if int(type_of_particle==0):
     Ek = Gamma*E0P
 
 eta = 1/GMTSQ-1/Gamma**2
-if nRF == 1:
-    Qs = np.sqrt(h[int(mainRF)]*atomicZ*np.abs(Vref_I[int(mainRF)])*eta/(2*np.pi*Ek))
-elif nRF != 1 :
-    Qs = np.sqrt(h[int(mainRF)]*atomicZ*np.abs(Vref_I[int(mainRF)]+Vref_I[1])*eta/(2*np.pi*Ek))
+Qs = np.sqrt(h[int(mainRF)]*atomicZ*np.abs(Vref_I[int(mainRF)])*eta/(2*np.pi*Ek))
 bucket_height_need = 1.2e-2
 Qs_need = 0.017#h[0]*eta*bucket_height_need/2
 
@@ -167,7 +164,7 @@ elif nRF ==2 or nRF==3 :
 	NF = nCav[0]
 	ND = nCav[1]
 
-thetaL = np.zeros(nRF)
+thetaL = np.zeros(nRF) # loading angle
 Vs = np.zeros(nRF)
 Vq = np.zeros(nRF)
 Phis = np.zeros(nRF)
@@ -196,12 +193,8 @@ Vq[4] = 1e-10#-Vquard_need/(NF-ND)
 print("Vs,Vq: ",Vs,Vq)
 print("Qs = ",Qs)
 PhisPhasor = np.arctan(Vq/Vs)
-Pbeam0 = Prad0/NC # beam power per fundamental cavity, 
-Pbeam = Prad0*nPar/nPar0/NC # beam power per fundamental cavity
 
 IbDC = nPar*f0*qe*n_bunches
-Pbeam = IbDC*Vs
-print("Beam power per cavity: ",Pbeam)
 
 
 f = h*f0
@@ -212,28 +205,17 @@ print("RoQ per cavity: ", RoQ)
 print("Number of cavity : ",nCav)
 
 Vreftot = np.sqrt(Vs**2+Vq**2) 
-Qbeam0 = Vreftot**2/(RoQacc*np.abs(Pbeam))
-Qbeam = Qbeam0
-QL[:] = Qbeam[:]
+
 QL[0] = 3e6#Qbeam
 QL[1] = 3e6#Qbeam
 QL[2] = 3e6#Qbeam
 QL[3] = 3e6#Qbeam
 QL[4] = 3e6#Qbeam
-if nRF == 3:
-	PhisPhasor[2] = PhisPhasor[2]+pi
-	#QL[2] = 1e8
-	#QL[0] = 1e5
-	#QL[1] = 1e5
-	
+
 Rsh = RoQ*QL
 
 # Now calculate the inputs
-thetaL[0] = (ThetaL_min[0]+dThetaL[0]*thetaL_factor)/180.0*pi  # angle between Ig and Vc
-if nRF >=2:
-	thetaL[1] = (ThetaL_min[1]+dThetaL[1]*thetaL_factor2)/180.0*pi
-if nRF ==3:
-	thetaL[2] = (ThetaL_min[2]+dThetaL[2]*thetaL_factor3)/180.0*pi 
+
 Vbr = 2*IbDC*Rsh
 print("Vbr = ",Vbr)
 Vgr = Vreftot/np.cos(thetaL)*(1+Vbr/Vreftot*np.cos(PhisPhasor))
@@ -365,7 +347,6 @@ tempinput['gIIi'] = np.array(gIIi)
 tempinput['gQQi'] = np.array(gQQi)
 tempinput['gIQi'] = np.array(gIQi)
 tempinput['gQIi'] = np.array(gQIi)
-tempinput['PA_cap'] = np.array(PA_cap)
 tempinput['epsilon_comb'] = np.array(epsilon_comb)
 tempinput['g_comb'] = np.array(g_comb)
 
@@ -402,10 +383,10 @@ with open(inputfile1,'w') as wrt_to_input:
 print("Generated input file.")
 # please leave the one that is going be used uncommented, and comment out the other two.
 
-#args = ("../APES")
+args = ("../../APES")
 #args = ("../APESAVX2")
 #args = ("../APESGCC")
-args = ("~/Dropbox/code/Cpp/APES_pack/APES8.41/run512.sh")
+#args = ("~/Dropbox/code/Cpp/APES_pack/APES8.41/run512.sh")
 #args = ("~/Dropbox/code/Cpp/APES_pack/APES8.41/runavx2.sh")
 #args = ("")
 print(cwd)
@@ -417,7 +398,7 @@ output = popen.stdout.read()
 print(output.decode("utf-8"))
 
 if "Beam Lost!" in output.decode("utf-8"):
-	path = os.path.join(cwd,"Lost_{0:03d}".format(charge_factor)+"{0:03d}".format(thetaL_factor)+"{0:03d}".format(delay_factor)+"{0:03d}".format(gain_factor)+"nmacro{0:.0f}".format(Npar)+"_nBin{0:.0f}".format(N_bins)+"_Idc{0:.2f}A".format(n_bunches*nPar*f0*qe)+"_ThetaL1_{0:.2f}degree".format(180/pi*thetaL[0])+"_3rd_{0:.3f}us".format(Vq3rd_factor)+"_delay{0:.3f}us".format(delay_time[0]/1e-6)+"_gain{0:.2f}_{1:.2f}".format(gII[0],gQQ[0])+"_epsilon_{0:.2e}".format(epsilon_comb[-1]))
+	path = os.path.join(cwd,"Lost")
 	try:
 		os.mkdir(path)
 	except OSError:
@@ -438,7 +419,7 @@ if "Beam Lost!" in output.decode("utf-8"):
 	# convert the RoQ back to per cavity, otherwise it's wrong
 	RoQ = RoQ*nCav
 else: 
-	path = os.path.join(cwd,"{0:03d}".format(charge_factor)+"{0:03d}".format(thetaL_factor)+"{0:03d}".format(delay_factor)+"{0:03d}".format(gain_factor)+"nmacro{0:.0f}".format(Npar)+"_nBin{0:.0f}".format(N_bins)+"_Idc{0:.2f}A".format(n_bunches*nPar*f0*qe)+"_ThetaL1_{0:.2f}degree".format(180/pi*thetaL[0])+"_3rd_{0:.3f}".format(Vq3rd_factor)+"_delay{0:.3f}us".format(delay_time[0]/1e-6)+"_gain{0:.2f}_{1:.2f}".format(gII[0],gQQ[0])+"_epsilon_{0:.2e}".format(epsilon_comb[-1]))
+	path = os.path.join(cwd,"Survived")
 	try:
 		os.mkdir(path)
 	except OSError:
